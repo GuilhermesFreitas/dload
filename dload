@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+if shutil.which("yt-dlp") is None:
+    print("❌ yt-dlp não encontrado! Por favor, instale com:")
+    print("   ➤ pacman -S yt-dlp  (ou)")
+    print("   ➤ pipx install yt-dlp")
+    sys.exit(1)
+
+
+def get_save_path():
+    """Permite ao usuário escolher entre pastas pré-definidas"""
+    print("\n 📂 Escolha onde salvar:")
+    print("1 - Pasta Downloads")
+    print("2 - Pasta Videos")
+    print("3 - Pasta Músicas")
+    
+    while True:
+        choice = input("Digite o número da opção (1-3): ").strip()
+        home = str(Path.home())
+        
+        if choice == "1":
+            return os.path.join(home, "Downloads")
+        elif choice == "2":
+            videos_path = os.path.join(home, "Videos")
+            Path(videos_path).mkdir(exist_ok=True)
+            return videos_path
+        elif choice == "3":
+            music_path = os.path.join(home, "Música")
+            if not os.path.exists(music_path):
+                music_path = os.path.join(home, "Musicas")
+            Path(music_path).mkdir(exist_ok=True)
+            return music_path
+        else:
+            print("Opção inválida. Tente novamente.")
+
+def baixar_audio(url, save_path):
+    print("\n 📦 Baixando áudio (MP3)...")
+    subprocess.run([
+        "yt-dlp",
+        "-x", "--audio-format", "mp3",
+        "-o", os.path.join(save_path, "%(title)s.%(ext)s"),
+        url
+    ])
+    print(f"\n ✅ Download de áudio concluído! Salvo em: {save_path}")
+
+def baixar_video(url, save_path):
+    print("\n 📦 Baixando vídeo com áudio (MP4)...")
+    subprocess.run([
+        "yt-dlp",
+        "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+        "-o", os.path.join(save_path, "%(title)s.%(ext)s"),
+        url
+    ])
+    print(f"\n ✅ Download de vídeo concluído! Salvo em: {save_path}")
+
+def videoDownloader(option, url):
+    save_path = get_save_path()
+    print(f"\n ℹ️ Os arquivos serão salvos em: {save_path}")
+
+    if option == "1":
+        confirmar = input("Deseja baixar apenas o áudio em MP3? (S/n): ").strip().lower()
+        if confirmar == "s" or confirmar == "":
+            baixar_audio(url, save_path)
+        else:
+            print("\n ❌ Download cancelado.")
+    elif option == "2":
+        confirmar = input("Deseja baixar o vídeo com áudio em MP4? (S/n): ").strip().lower()
+        if confirmar == "s" or confirmar == "":
+            baixar_video(url, save_path)
+        else:
+            print("\n ❌ Download cancelado.")
+    elif option == "3":
+        print("\n👋 Saindo...")
+    else:
+        print("\n ⚠️ Opção inválida.")
+
+
+print("\n" + "="*40)
+print("Dload - Fastdownload".center(40))
+print("="*40)
+print("1 - Baixar como MP3 (Música)")
+print("2 - Baixar como MP4 (Vídeo)")
+print("3 - Sair")
+print("="*40)
+
+option = input("\nEscolha uma opção (1-3): ").strip()
+
+if option != "3":
+    url = input("\n 🔗 Cole aqui a URL do vídeo: ").strip()
+    videoDownloader(option, url)
+else:
+    videoDownloader(option, "")
