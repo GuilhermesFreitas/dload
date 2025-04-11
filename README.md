@@ -2,6 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-blueviolet)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![GitHub stars](https://img.shields.io/github/stars/GuilhermesFreitas/dload?style=social)
 
 **Dload** é uma ferramenta de terminal super rápida para baixar vídeos e músicas do YouTube (e muitos outros sites), usando o poderoso [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — com interface amigável, organização automática e recursos inteligentes!
