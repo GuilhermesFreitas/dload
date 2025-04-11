@@ -1,56 +1,78 @@
 # 🚀 Dload - Fast & Interactive Video Downloader for the Terminal
 
-
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-blueviolet)
 ![GitHub stars](https://img.shields.io/github/stars/GuilhermesFreitas/dload?style=social)
 
-**Dload** é um CLI tool super rápido para downloads de vídeos e áudio do YouTube usando o poderoso [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) - com interface amigável e organização automática em pastas!
+**Dload** é uma ferramenta de terminal super rápida para baixar vídeos e músicas do YouTube (e muitos outros sites), usando o poderoso [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — com interface amigável, organização automática e recursos inteligentes!
 
-## 🌟 Features Principais
-- ✅ Download rápido de vídeos e áudios com alta qualidade
+---
 
-- 🖥️ Interface interativa aprimorada com emojis e banners estilizados
+## 🌟 Por que usar o Dload?
 
-- 📂 Organização automática em pastas (Downloads/, Vídeos/, Músicas)
+| Recurso                | Dload | yt-dlp Padrão |
+|------------------------|-------|---------------|
+| 🖥️ Interface amigável  | ✅    | ❌            |
+| 📂 Auto-organização    | ✅    | ❌            |
+| 🧠 Verificações úteis  | ✅    | ❌            |
+| 📜 Histórico           | ✅    | ❌            |
+| 🎯 Multiplataforma     | ✅    | ✅            |
 
-🧠 Verificações inteligentes:
+---
 
-- Espaço disponível no disco
-- Atualizações disponíveis do yt-dlp
-- Presença de cookies.txt (para conteúdo privado)
+## ✨ Principais Features
 
-- 📜 Histórico de downloads salvo em .dload_history
+- **🎯 Download inteligente**
+  - MP4 (vídeo) e MP3 (música) em alta qualidade
+  - Suporte a playlists e vídeos privados (com `cookies.txt`)
 
-- ⚡ Baseado no poderoso yt-dlp
+- **🖥️ Interface premium**
+  - Menus interativos com emojis, cores e banners estilizados
 
-- 🔄 Atualização automática do yt-dlp incluída
+- **📂 Organização automática**
+  - Arquivos salvos em:
+    ```
+    ~/Downloads/
+    ~/Vídeos/
+    ~/Músicas/
+    ```
 
-- 🧱 Código modular e de fácil manutenção
+- **🧠 Verificações inteligentes**
+  - Checa espaço em disco antes de baixar
+  - Verifica atualizações do yt-dlp
+  - Detecta cookies para conteúdo restrito
+
+- **⚙️ Extras**
+  - 📜 Histórico de downloads (`~/.dload_history`)
+  - 🔄 Atualização automática do yt-dlp
+  - 🐍 Código simples e único (fácil de entender e contribuir)
+
 ---
 
 ## 📑 Tabela de Conteúdo
 
-- [Requisitos](#-requisitos)
-- [Features Principais](#-features-principais)
-- [Instalação](#-instalação)
-- [Como Usar](#-como-usar)
-- [Solução de Problemas](#-solução-de-problemas)
-- [Desinstalação](#-desinstalação)
-- [Como ajudar](#-como-ajudar)
-  
+- [✅ Requisitos](#-requisitos)
+- [✨ Principais Features](#-principais-features)
+- [🚀 Instalação](#-instalação)
+- [💡 Como Usar](#-como-usar)
+- [🛠️ Solução de Problemas](#️-solução-de-problemas)
+- [🧼 Desinstalação](#-desinstalação)
+- [✨ Como Ajudar](#-como-ajudar)
+
 ---
 
 ## ✅ Requisitos
 
-### 📦 Dependências Principais
+### 📦 Dependências
+
 - [Python 3.7+](https://www.python.org/downloads/)
-- [FFmpeg](https://ffmpeg.org/) (para conversão de formatos)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) (backend de download)
+- [FFmpeg](https://ffmpeg.org/)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
-### 🔧 Instalando Pré-requisitos
+### 🔧 Instalando Dependências
 
-#### Para Linux (Debian/Ubuntu):
+#### Debian/Ubuntu:
+
 ```bash
 sudo apt update
 ```
