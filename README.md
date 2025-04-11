@@ -74,7 +74,6 @@
 
 - [Python 3.7+](https://www.python.org/downloads/)
 - [FFmpeg](https://ffmpeg.org/)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
 ### 🔧 Instalando Dependências
 
@@ -86,25 +85,17 @@ sudo apt update
 ```
 sudo apt install -y python3 python3-pip ffmpeg
 ```
-```
-python3 -m pip install --user yt-dlp
-```
 
 #### Para Linux (Arch/Manjaro):
 ```bash
 sudo pacman -S python python-pip ffmpeg
-```
-```
-pip install --user yt-dlp
 ```
 
 #### Para macOS (via Homebrew):
 ```bash
 brew install python ffmpeg
 ```
-```
-pip install yt-dlp
-```
+
 #### Para Windows (PowerShell):
 ```powershell
 winget install Python.Python.3.11
