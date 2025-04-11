@@ -1,98 +1,190 @@
 #!/usr/bin/env python3
 
 import os
-import shutil
 import subprocess
 import sys
+import re
+import shutil
 from pathlib import Path
+from datetime import datetime
 
-if shutil.which("yt-dlp") is None:
-    print("❌ yt-dlp não encontrado! Por favor, instale com:")
-    print("   ➤ pacman -S yt-dlp  (ou)")
-    print("   ➤ pipx install yt-dlp")
-    sys.exit(1)
+BANNER = """
+    ========================================
+          Dload - Fastdownload      
+    ========================================
+"""
 
+MENU = """
+1. 🎵 Baixar Áudio (MP3)
+2. 🎬 Baixar Vídeo (MP4)
+3. ❌ Sair
+"""
 
-def get_save_path():
-    """Permite ao usuário escolher entre pastas pré-definidas"""
-    print("\n 📂 Escolha onde salvar:")
-    print("1 - Pasta Downloads")
-    print("2 - Pasta Videos")
-    print("3 - Pasta Músicas")
-    
-    while True:
-        choice = input("Digite o número da opção (1-3): ").strip()
-        home = str(Path.home())
-        
-        if choice == "1":
-            return os.path.join(home, "Downloads")
-        elif choice == "2":
-            videos_path = os.path.join(home, "Videos")
-            Path(videos_path).mkdir(exist_ok=True)
-            return videos_path
-        elif choice == "3":
-            music_path = os.path.join(home, "Música")
-            if not os.path.exists(music_path):
-                music_path = os.path.join(home, "Musicas")
-            Path(music_path).mkdir(exist_ok=True)
-            return music_path
-        else:
-            print("Opção inválida. Tente novamente.")
+def verificar_ytdlp():
+    if shutil.which("yt-dlp") is None:
+        print(" ❌ yt-dlp não encontrado! Por favor, instale com:")
+        print("   ➤ pacman -S yt-dlp  (ou)")
+        print("   ➤ pipx install yt-dlp")
+        sys.exit(1)
 
-def baixar_audio(url, save_path):
-    print("\n 📦 Baixando áudio (MP3)...")
-    subprocess.run([
-        "yt-dlp",
-        "-x", "--audio-format", "mp3",
-        "-o", os.path.join(save_path, "%(title)s.%(ext)s"),
-        url
-    ])
-    print(f"\n ✅ Download de áudio concluído! Salvo em: {save_path}")
+def pasta_destino(opcao):
+    home = Path.home()
+    music_dir = home / "Música" if (home / "Música").exists() else home / "Musicas"
 
-def baixar_video(url, save_path):
-    print("\n 📦 Baixando vídeo com áudio (MP4)...")
-    subprocess.run([
-        "yt-dlp",
-        "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
-        "-o", os.path.join(save_path, "%(title)s.%(ext)s"),
-        url
-    ])
-    print(f"\n ✅ Download de vídeo concluído! Salvo em: {save_path}")
-
-def videoDownloader(option, url):
-    save_path = get_save_path()
-    print(f"\n ℹ️ Os arquivos serão salvos em: {save_path}")
-
-    if option == "1":
-        confirmar = input("Deseja baixar apenas o áudio em MP3? (S/n): ").strip().lower()
-        if confirmar == "s" or confirmar == "":
-            baixar_audio(url, save_path)
-        else:
-            print("\n ❌ Download cancelado.")
-    elif option == "2":
-        confirmar = input("Deseja baixar o vídeo com áudio em MP4? (S/n): ").strip().lower()
-        if confirmar == "s" or confirmar == "":
-            baixar_video(url, save_path)
-        else:
-            print("\n ❌ Download cancelado.")
-    elif option == "3":
-        print("\n👋 Saindo...")
+    if opcao == "1":
+        return home / "Downloads"
+    elif opcao == "2":
+        return home / "Videos"
+    elif opcao == "3":
+        return music_dir
     else:
-        print("\n ⚠️ Opção inválida.")
+        return home / "Downloads"
 
+def verificar_espaco(pasta, tamanho_minimo=100):
+    stat = shutil.disk_usage(pasta)
+    if stat.free < tamanho_minimo * 1024 * 1024:
+        print(f"⚠️  Espaço insuficiente em {pasta}!")
+        return False
+    return True
 
-print("\n" + "="*40)
-print("Dload - Fastdownload".center(40))
-print("="*40)
-print("1 - Baixar como MP3 (Música)")
-print("2 - Baixar como MP4 (Vídeo)")
-print("3 - Sair")
-print("="*40)
+def listar_formatos_disponiveis(url):
+    print("\n 🔍 Buscando resoluções disponíveis...")
 
-option = input("\nEscolha uma opção (1-3): ").strip()
+    try:
+        resultado = subprocess.run(
+            ["yt-dlp", "-F", url],
+            capture_output=True, text=True, check=True
+        )
+        linhas = resultado.stdout.splitlines()
 
-if option != "3":
-    url = input("\n 🔗 Cole aqui a URL do vídeo: ").strip()
-    videoDownloader(option, url)
-else:
-    videoDownloader(option, "")
+        print("\n🎞️  Formatos disponíveis (vídeo + áudio):\n")
+        print("ID   │ RESOLUÇÃO │   EXT    │ INFO")
+        print("─────┼───────────┼──────────┼─────────────────────────────")
+
+        formatos_validos = []
+
+        for linha in linhas:
+            if re.search(r'\b(audio only|video only)\b', linha):
+                continue
+            if re.match(r'^\d{1,4}\s', linha):
+                print(linha)
+                formatos_validos.append(linha)
+
+        return True if formatos_validos else False
+
+    except subprocess.CalledProcessError as e:
+        print("❌ Erro ao buscar formatos:", e.stderr)
+        return False
+
+def verificar_atualizacao():
+    try:
+        resultado = subprocess.run(["yt-dlp", "-U"], capture_output=True, text=True)
+        print(resultado.stdout.splitlines()[-1])
+    except Exception as e:
+        print("⚠️  Não foi possível verificar atualizações:", e)
+
+def verificar_cookies():
+    if os.path.exists("cookies.txt"):
+        print("⚠️  Aviso: arquivo 'cookies.txt' detectado. Certifique-se de que é seguro usar cookies locais.")
+
+def registrar_download(url, destino):
+    try:
+        with open(Path.home()/".dload_history", "a") as f:
+            f.write(f"{datetime.now():%Y-%m-%d %H:%M} | {url} | {destino}\n")
+    except Exception as e:
+        print(f"⚠️  Não foi possível registrar no histórico: {e}")
+
+def baixar_audio():
+    url = input("\n 🌍 Cole a URL do vídeo: ").strip()
+    if not url:
+        print("❌ URL não pode ser vazia!")
+        return
+
+    print("\n 📂 Escolha onde salvar:")
+    print("1 - Pasta Downloads\n2 - Pasta Videos\n3 - Pasta Músicas")
+    opcao = input("Digite o número da opção (1-3): ").strip()
+    destino = pasta_destino(opcao)
+
+    if not verificar_espaco(destino):
+        return
+
+    cmd = [
+        "yt-dlp", "-x", "--audio-format", "mp3",
+        "--audio-quality", "0",
+        "--embed-thumbnail",
+        "--output", f"{destino}/%(title)s.%(ext)s", url
+    ]
+
+    verificar_cookies()
+
+    try:
+        subprocess.run(cmd, check=True)
+        registrar_download(url, destino)
+        print("✅ Download de áudio concluído!")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erro ao baixar áudio: {e.stderr}")
+
+def baixar_video():
+    url = input("\n 🌍 Cole a URL do vídeo: ").strip()
+    if not url:
+        print("❌ URL não pode ser vazia!")
+        return
+
+    print("\n 📂 Escolha onde salvar:")
+    print("1 - Pasta Downloads\n2 - Pasta Videos\n3 - Pasta Músicas")
+    opcao = input("Digite o número da opção (1-3): ").strip()
+    destino = pasta_destino(opcao)
+
+    if not verificar_espaco(destino):
+        return
+
+    listar = input(" 🔍 Listar formatos disponíveis? (s/N): ").lower()
+    if listar == "s":
+        if not listar_formatos_disponiveis(url):
+            return
+
+    formato = input("\n⌨️ Digite o ID do formato (ex: 18, 22) ou pressione Enter para melhor qualidade: ").strip()
+    
+    cmd = [
+        "yt-dlp",
+        "--merge-output-format", "mp4",
+        "--write-subs", "--sub-langs", "pt,en",
+        "--embed-thumbnail",
+        "-o", f"{destino}/%(title)s.%(ext)s",
+    ]
+    
+    if formato and formato.isdigit():
+        cmd += ["-f", formato]
+    
+    cmd.append(url)
+
+    verificar_cookies()
+
+    try:
+        subprocess.run(cmd, check=True)
+        registrar_download(url, destino)
+        print("✅ Download de vídeo concluído!")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erro ao baixar vídeo: {e.stderr}")
+
+def main():
+    print(BANNER)
+    verificar_ytdlp()
+    verificar_atualizacao()
+
+    while True:
+        print(MENU)
+        escolha = input("Escolha (1-3): ").strip()
+
+        if escolha == "1":
+            baixar_audio()
+        elif escolha == "2":
+            baixar_video()
+        elif escolha == "3":
+            print("👋 Saindo...")
+            sys.exit(0)
+        else:
+            print("❌ Opção inválida. Tente novamente.")
+
+if __name__ == "__main__":
+    main()
