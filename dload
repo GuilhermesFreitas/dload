@@ -38,21 +38,47 @@ DESTINOS = {
     "3": ler_diretorio_usuario("XDG_MUSIC_DIR", Path.home() / "Música"),
 }
 
-def instalar_yt_dlp():
-    """Instala o yt-dlp automaticamente se não estiver instalado."""
+def instalar_dependencia(pacote):
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
-        print("✅ yt-dlp instalado com sucesso!")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erro ao instalar yt-dlp: {e}")
-        logger.error(f"Erro ao instalar yt-dlp: {e}")
-        sys.exit(1)
+        if Path("/etc/arch-release").exists():
+            subprocess.run(["sudo", "pacman", "-Sy", "--noconfirm", pacote], check=True)
+        else:
+            subprocess.run([sys.executable, "-m", "pip", "install", "--user", pacote], check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
-def verificar_yt_dlp():
-    """Verifica se yt-dlp está instalado, e tenta instalá-lo caso não esteja."""
-    if shutil.which("yt-dlp") is None:
-        print("❌ yt-dlp não encontrado.")
-        instalar_yt_dlp()
+def verificar_dependencias():
+    dependencias = {
+        "yt-dlp": {
+            "arch": "yt-dlp",
+            "outros": "yt-dlp",
+            "mensagem": "Necessário para downloads"
+        },
+        "ffmpeg": {
+            "arch": "ffmpeg",
+            "outros": "ffmpeg-python",
+            "mensagem": "Necessário para conversões"
+        }
+    }
+
+    for cmd, info in dependencias.items():
+        if not shutil.which(cmd):
+            print(f"\n❌ {cmd} não encontrado ({info['mensagem']})")
+            print("🔄 Tentando instalação automática...")
+            
+            if Path("/etc/arch-release").exists():
+                if not instalar_dependencia(info["arch"]):
+                    print(f"\n⚠️ Falha na instalação automática para Arch Linux")
+                    print(f"Instale manualmente com: sudo pacman -S {info['arch']}")
+                    sys.exit(1)
+            else:
+                if not instalar_dependencia(info["outros"]):
+                    print(f"\n⚠️ Falha na instalação automática")
+                    print(f"Instale manualmente com: pip install --user {info['outros']}")
+                    sys.exit(1)
+            
+            print(f"✅ {cmd} instalado com sucesso!")
 
 def obter_titulo_video(url):
     try:
@@ -237,12 +263,7 @@ def main():
 """)
     logger.info("Iniciando Dload")
 
-    verificar_yt_dlp()
-
-    if shutil.which("ffmpeg") is None:
-        print("❌ ffmpeg não encontrado. Instale com:")
-        print("  sudo pacman -S ffmpeg  # ou equivalente")
-        sys.exit(1)
+    verificar_dependencias()
 
     try:
         while True:
