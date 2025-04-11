@@ -103,7 +103,7 @@ pip install yt-dlp
 winget install Python.Python.3.11
 ```
 ```
-winget install Gyan.FFmpeg
+winget install Gyan.FFmpeg(necessário para baixar e converter mídias)
 ```
 ```
 pip install yt-dlp
@@ -133,7 +133,9 @@ pipx ensurepath
 ---
 
 
-### 🚀 Instalação
+## 🚀 Instalação
+
+### 🐧 Linux/macOS:
 
 ```
 git clone https://github.com/GuilhermesFreitas/dload
@@ -144,23 +146,61 @@ cd dload
 ```
 cp dload ~/.local/bin/
 ```
-Certifique-se de que ~/.local/bin está no seu $PATH.
+#### Certifique-se de que ~/.local/bin está no seu $PATH.
+
+### 🪟 Windows (PowerShell - Método Recomendado):
+
+```
+git clone https://github.com/GuilhermesFreitas/dload
+```
+```
+cd dload
+```
+#### 1. Crie uma pasta para scripts locais (caso ainda não exista):
+```
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.local\bin"
+```
+#### 2. Copie o script dload para lá:
+```
+Copy-Item .\dload "$env:USERPROFILE\.local\bin\dload"
+
+```
+#### 3. Adicione ao PATH (caso ainda não esteja):
+```
+[Environment]::SetEnvironmentVariable(
+  "PATH",
+  $env:PATH + ";$env:USERPROFILE\.local\bin",
+  [System.EnvironmentVariableTarget]::User
+)
+
+```
+
+#### 4. Reinicie o terminal ou use:
+```
+$env:PATH += ";$env:USERPROFILE\.local\bin"
+
+```
+
+#### 5. Teste:
+```
+dload
+```
 
 ## 🔍 Verifique:
 ```
 which dload
 ```
-Se não aparecer, adicione ao seu .bashrc ou .zshrc:
+#### Se não aparecer, adicione ao seu .bashrc ou .zshrc:
 ```
 export PATH="$HOME/.local/bin:$PATH"
 ```
 ## 💡 Como Usar
 
-Execute no terminal:
+#### Execute no terminal:
 ```
 dload
 ```
-Você verá um menu interativo para escolher entre:
+#### Você verá um menu interativo para escolher entre:
 ```
 ========================================
           Dload - Fastdownload
@@ -170,7 +210,7 @@ Você verá um menu interativo para escolher entre:
 3 - Sair
 ========================================
 ```
-Você poderá escolher onde salvar o conteúdo: Downloads, Vídeos ou Músicas.
+#### Você poderá escolher onde salvar o conteúdo: Downloads, Vídeos ou Músicas.
 ```
  🔗 Cole aqui a URL do vídeo: 
 
@@ -183,7 +223,7 @@ Digite o número da opção (1-3):
 ```
 ## 🛠️ Solução de Problemas
 
-- Se encontrar erros, certifique-se que:
+#### - Se encontrar erros, certifique-se que:
   
   1. FFmpeg está instalado (`ffmpeg -version`)
   2. yt-dlp está atualizado (`yt-dlp -U`)
@@ -195,14 +235,14 @@ Digite o número da opção (1-3):
 ```
 rm ~/.local/bin/dload
 ```
-Opcional: remova o diretório clonado do repositório:
+#### Opcional: remova o diretório clonado do repositório:
 ```
 rm -rf ~/dload
 ```
 ---
 ## Projeto Open Source
 
-Este projeto é open source e contribuições são bem-vindas!
+#### Este projeto é open source e contribuições são bem-vindas!
 
 ### ✨ Como ajudar:
 
