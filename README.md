@@ -1,3 +1,5 @@
+
+
 # 🚀 Dload - Fast & Interactive Video Downloader for the Terminal
 
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
@@ -17,6 +19,8 @@
 | 📂 Auto-organização    | ✅    | ❌            |
 | 🧠 Verificações úteis  | ✅    | ❌            |
 | 📜 Histórico           | ✅    | ❌            |
+| 📣 Pré-visualização    | ✅    | ❌            |
+| 📦 Pronto para empacote| ✅    | ❌            |
 | 🎯 Multiplataforma     | ✅    | ✅            |
 
 ---
@@ -29,26 +33,28 @@
 
 - **🖥️ Interface premium**
   - Menus interativos com emojis, cores e banners estilizados
+  - Confirmação de título do vídeo antes do download
 
 - **📂 Organização automática**
-  - Arquivos salvos em:
+  - Arquivos salvos de forma intuitiva em:
     ```
     ~/Downloads/
     ~/Vídeos/
     ~/Músicas/
     ```
+  - Integração com XDG (`~/.config/user-dirs.dirs`)
 
 - **🧠 Verificações inteligentes**
-  - Checa espaço em disco antes de baixar
-  - Verifica atualizações do yt-dlp
-  - Detecta cookies para conteúdo restrito
+  - Checagem de espaço em disco antes de baixar
+  - Verificação de atualizações do yt-dlp
+  - Detecção de cookies para conteúdo restrito
 
 - **⚙️ Extras**
-  - 📜 Histórico de downloads (`~/.dload_history`)
+  - 📜 Histórico de downloads detalhado (`~/.dload_history`)
+  - 📁 Log de atividades (`~/.dload.log`)
   - 🔄 Atualização automática do yt-dlp
-  - 🐍 Código simples e único (fácil de entender e contribuir)
-
----
+  - 📦 Estrutura pronta para empacotamento (.deb, AUR, pipx etc.)
+  - 🐍 Código simples, tudo em um único arquivo (`dload`)
 
 ## 📑 Tabela de Conteúdo
 
@@ -203,23 +209,29 @@ dload
 ```
 #### Você verá um menu interativo para escolher entre:
 ```
-========================================
-          Dload - Fastdownload
-========================================
-1 - Baixar como MP3 (Música)
-2 - Baixar como MP4 (Vídeo)
-3 - Sair
-========================================
+    ========================================
+          Dload - Fastdownload      
+    ========================================
+
+
+1. 🎵 Baixar Áudio (MP3)
+2. 🎮 Baixar Vídeo (MP4)
+3. 📜 Mostrar Histórico
+4. 🧹 Limpar Histórico
+5. ❌ Sair
 ```
 #### Você poderá escolher onde salvar o conteúdo: Downloads, Vídeos ou Músicas.
 ```
- 🔗 Cole aqui a URL do vídeo: 
+🌍 Cole a URL do vídeo: 
+
+📋 Título: 
+✔️  Confirmar? [S/n]: 
 
  📂 Escolha onde salvar:
-1 - Pasta Downloads
-2 - Pasta Videos
-3 - Pasta Músicas
-Digite o número da opção (1-3):
+1 - Downloads
+2 - Vídeos
+3 - Músicas
+Digite o número (1-3):
 
 ```
 ## 🛠️ Solução de Problemas
@@ -252,3 +264,11 @@ Dando estrela ⭐ no repositório
 Sugerindo melhorias ou reportando bugs
 
 Enviando pull requests
+
+## 📝 Licença
+
+### Este projeto está licenciado sob a Licença MIT.
+
+Você pode usar, modificar e distribuir este projeto, desde que inclua o aviso de direitos autorais e a licença.
+Para mais detalhes, veja o arquivo LICENSE.
+
