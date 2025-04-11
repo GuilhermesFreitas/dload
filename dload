@@ -5,186 +5,264 @@ import subprocess
 import sys
 import re
 import shutil
+import logging
 from pathlib import Path
 from datetime import datetime
 
-BANNER = """
+logging.basicConfig(
+    filename=Path.home() / '.dload.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    encoding='utf-8'
+)
+
+logger = logging.getLogger('dload')
+
+def ler_diretorio_usuario(var, padrao):
+    config = Path.home() / ".config" / "user-dirs.dirs"
+    if config.exists():
+        try:
+            with open(config, "r", encoding="utf-8") as f:
+                for linha in f:
+                    if var in linha:
+                        caminho = re.findall(r'"(.*?)"', linha)
+                        if caminho:
+                            return Path(caminho[0].replace("$HOME", str(Path.home()))).expanduser()
+        except Exception as e:
+            logger.warning(f"Erro ao ler {config}: {e}")
+    return Path(padrao)
+
+DESTINOS = {
+    "1": ler_diretorio_usuario("XDG_DOWNLOAD_DIR", Path.home() / "Downloads"),
+    "2": ler_diretorio_usuario("XDG_VIDEOS_DIR", Path.home() / "Vídeos"),
+    "3": ler_diretorio_usuario("XDG_MUSIC_DIR", Path.home() / "Música"),
+}
+
+def obter_titulo_video(url):
+    try:
+        resultado = subprocess.run([
+            "yt-dlp", "--get-title", "--no-warnings", url
+        ], capture_output=True, text=True, check=True)
+        return resultado.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Erro ao obter título: {e.stderr}")
+        return None
+
+def solicitar_url():
+    url = input("\n 🌍 Cole a URL do vídeo: ").strip()
+    if not url:
+        logger.error("URL vazia fornecida")
+        print("❌ URL não pode ser vazia!")
+        return None
+    return url
+
+def confirmar(mensagem="✔️  Confirmar? [S/n]: "):
+    return input(mensagem).strip().lower() in ("", "s")
+
+def obter_pasta_destino(opcao):
+    caminho = Path(DESTINOS.get(opcao, DESTINOS["1"]))
+    try:
+        caminho.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        logger.warning(f"Falha ao criar pasta {caminho}: {e}")
+    return caminho
+
+def verificar_espaco(pasta, tamanho_minimo):
+    try:
+        stat = shutil.disk_usage(pasta)
+        livre_mb = stat.free // (1024 * 1024)
+        if livre_mb < tamanho_minimo:
+            print(f"⚠️  Espaço insuficiente! Livre: {livre_mb}MB (Necessário: {tamanho_minimo}MB)")
+            logger.warning(f"Espaço insuficiente em {pasta} ({livre_mb}MB < {tamanho_minimo}MB)")
+            return False
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao verificar espaço: {e}")
+        print(f"❌ Erro ao verificar espaço em disco: {e}")
+        return False
+
+def salvar_no_historico(url, destino, tipo):
+    try:
+        with open(Path.home()/".dload_history", "a", encoding='utf-8') as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            titulo = obter_titulo_video(url) or "Desconhecido"
+            f.write(f"{timestamp} | {tipo} | {titulo[:50]}... | {url} | {destino}\n")
+    except Exception as e:
+        logger.error(f"Erro ao registrar histórico: {e}")
+
+def exibir_historico():
+    hist = Path.home() / ".dload_history"
+    if not hist.exists():
+        print("ℹ️  Nenhum histórico encontrado")
+        return
+    try:
+        with open(hist, "r", encoding='utf-8') as f:
+            print("\n📜 Histórico de Downloads:")
+            print("="*80)
+            for linha in f.readlines()[-10:]:
+                print(linha.strip())
+            print("="*80)
+    except Exception as e:
+        logger.error(f"Erro ao ler histórico: {e}")
+        print("❌ Erro ao ler histórico")
+
+def limpar_historico():
+    hist = Path.home() / ".dload_history"
+    if hist.exists():
+        try:
+            hist.unlink()
+            print("🧹 Histórico apagado com sucesso.")
+            logger.info("Histórico apagado pelo usuário.")
+        except Exception as e:
+            logger.error(f"Erro ao apagar histórico: {e}")
+            print(f"❌ Erro ao apagar histórico: {e}")
+    else:
+        print("ℹ️ Nenhum histórico para apagar.")
+
+def executar_download(cmd, url, destino, tipo):
+    print("\n⏳ Iniciando download...")
+    logger.info(f"Iniciando download de {tipo.lower()}: {url}")
+
+    try:
+        processo = subprocess.run(cmd, text=True)
+        if processo.returncode == 0:
+            salvar_no_historico(url, destino, tipo)
+            print("\n✅ Download concluído!")
+        else:
+            print("\n❌ Erro no download.")
+    except Exception as e:
+        logger.error(f"Falha no subprocesso: {e}", exc_info=True)
+        print(f"\n❌ Erro ao executar comando: {e}")
+
+def baixar_audio():
+    try:
+        url = solicitar_url()
+        if not url:
+            return
+
+        titulo = obter_titulo_video(url)
+        if titulo:
+            print(f"\n📋 Título: {titulo}")
+            if not confirmar():
+                return
+        else:
+            print("⚠️  Não foi possível verificar o título")
+            if not confirmar("Continuar mesmo assim? [s/N]: "):
+                return
+
+        print("\n 📂 Escolha onde salvar:\n1 - Downloads\n2 - Vídeos\n3 - Músicas")
+        destino = obter_pasta_destino(input("Digite o número (1-3): ").strip())
+
+        if not verificar_espaco(destino, 200):
+            return
+
+        cmd = [
+            "yt-dlp", "-x", "--audio-format", "mp3",
+            "--audio-quality", "0", "--embed-thumbnail",
+            "--newline", "--no-warnings",
+            "-o", f"{destino}/%(title)s.%(ext)s", url
+        ]
+
+        executar_download(cmd, url, destino, "Áudio")
+
+    except Exception as e:
+        logger.error(f"Erro inesperado: {e}", exc_info=True)
+        print(f"❌ Ocorreu um erro: {e}")
+
+def baixar_video():
+    try:
+        url = solicitar_url()
+        if not url:
+            return
+
+        titulo = obter_titulo_video(url)
+        if titulo:
+            print(f"\n📋 Título: {titulo}")
+            if not confirmar():
+                return
+        else:
+            print("⚠️  Não foi possível verificar o título")
+            if not confirmar("Continuar mesmo assim? [s/N]: "):
+                return
+
+        print("\n 📂 Escolha onde salvar:\n1 - Downloads\n2 - Vídeos\n3 - Músicas")
+        destino = obter_pasta_destino(input("Digite o número (1-3): ").strip())
+
+        if not verificar_espaco(destino, 500):
+            return
+
+        if input("\n🔍 Listar formatos disponíveis? [s/N]: ").lower() == "s":
+            subprocess.run(["yt-dlp", "-F", url], check=True)
+            formato = input("\n⌨️ Digite o ID do formato ou Enter para melhor qualidade: ").strip()
+        else:
+            formato = ""
+
+        cmd = [
+            "yt-dlp", "--merge-output-format", "mp4",
+            "--embed-thumbnail", "--newline", "--no-warnings",
+            "-o", f"{destino}/%(title)s.%(ext)s"
+        ]
+
+        if formato:
+            cmd.extend(["-f", formato])
+        cmd.append(url)
+
+        executar_download(cmd, url, destino, "Vídeo")
+
+    except Exception as e:
+        logger.error(f"Erro inesperado: {e}", exc_info=True)
+        print(f"❌ Ocorreu um erro: {e}")
+
+def main():
+    print("""
     ========================================
           Dload - Fastdownload      
     ========================================
-"""
+""")
+    logger.info("Iniciando Dload")
 
-MENU = """
-1. 🎵 Baixar Áudio (MP3)
-2. 🎬 Baixar Vídeo (MP4)
-3. ❌ Sair
-"""
-
-def verificar_ytdlp():
     if shutil.which("yt-dlp") is None:
-        print(" ❌ yt-dlp não encontrado! Por favor, instale com:")
-        print("   ➤ pacman -S yt-dlp  (ou)")
-        print("   ➤ pipx install yt-dlp")
+        print("❌ yt-dlp não encontrado. Instale com:")
+        print("  pip install yt-dlp")
         sys.exit(1)
 
-def pasta_destino(opcao):
-    home = Path.home()
-    music_dir = home / "Música" if (home / "Música").exists() else home / "Musicas"
-
-    if opcao == "1":
-        return home / "Downloads"
-    elif opcao == "2":
-        return home / "Videos"
-    elif opcao == "3":
-        return music_dir
-    else:
-        return home / "Downloads"
-
-def verificar_espaco(pasta, tamanho_minimo=100):
-    stat = shutil.disk_usage(pasta)
-    if stat.free < tamanho_minimo * 1024 * 1024:
-        print(f"⚠️  Espaço insuficiente em {pasta}!")
-        return False
-    return True
-
-def listar_formatos_disponiveis(url):
-    print("\n 🔍 Buscando resoluções disponíveis...")
+    if shutil.which("ffmpeg") is None:
+        print("❌ ffmpeg não encontrado. Instale com:")
+        print("  sudo pacman -S ffmpeg  # ou equivalente")
+        sys.exit(1)
 
     try:
-        resultado = subprocess.run(
-            ["yt-dlp", "-F", url],
-            capture_output=True, text=True, check=True
-        )
-        linhas = resultado.stdout.splitlines()
+        while True:
+            print("""
+1. 🎵 Baixar Áudio (MP3)
+2. 🎮 Baixar Vídeo (MP4)
+3. 📜 Mostrar Histórico
+4. 🧹 Limpar Histórico
+5. ❌ Sair
+""")
+            escolha = input("Escolha (1-5): ").strip()
 
-        print("\n🎞️  Formatos disponíveis (vídeo + áudio):\n")
-        print("ID   │ RESOLUÇÃO │   EXT    │ INFO")
-        print("─────┼───────────┼──────────┼─────────────────────────────")
-
-        formatos_validos = []
-
-        for linha in linhas:
-            if re.search(r'\b(audio only|video only)\b', linha):
-                continue
-            if re.match(r'^\d{1,4}\s', linha):
-                print(linha)
-                formatos_validos.append(linha)
-
-        return True if formatos_validos else False
-
-    except subprocess.CalledProcessError as e:
-        print("❌ Erro ao buscar formatos:", e.stderr)
-        return False
-
-def verificar_atualizacao():
-    try:
-        resultado = subprocess.run(["yt-dlp", "-U"], capture_output=True, text=True)
-        print(resultado.stdout.splitlines()[-1])
+            if escolha == "1":
+                baixar_audio()
+            elif escolha == "2":
+                baixar_video()
+            elif escolha == "3":
+                exibir_historico()
+            elif escolha == "4":
+                limpar_historico()
+            elif escolha == "5":
+                logger.info("Aplicação encerrada pelo usuário")
+                print("👋 Saindo...")
+                sys.exit(0)
+            else:
+                print("❌ Opção inválida. Tente novamente.")
+    except KeyboardInterrupt:
+        print("\n👋 Encerrando...")
+        sys.exit(0)
     except Exception as e:
-        print("⚠️  Não foi possível verificar atualizações:", e)
-
-def verificar_cookies():
-    if os.path.exists("cookies.txt"):
-        print("⚠️  Aviso: arquivo 'cookies.txt' detectado. Certifique-se de que é seguro usar cookies locais.")
-
-def registrar_download(url, destino):
-    try:
-        with open(Path.home()/".dload_history", "a") as f:
-            f.write(f"{datetime.now():%Y-%m-%d %H:%M} | {url} | {destino}\n")
-    except Exception as e:
-        print(f"⚠️  Não foi possível registrar no histórico: {e}")
-
-def baixar_audio():
-    url = input("\n 🌍 Cole a URL do vídeo: ").strip()
-    if not url:
-        print("❌ URL não pode ser vazia!")
-        return
-
-    print("\n 📂 Escolha onde salvar:")
-    print("1 - Pasta Downloads\n2 - Pasta Videos\n3 - Pasta Músicas")
-    opcao = input("Digite o número da opção (1-3): ").strip()
-    destino = pasta_destino(opcao)
-
-    if not verificar_espaco(destino):
-        return
-
-    cmd = [
-        "yt-dlp", "-x", "--audio-format", "mp3",
-        "--audio-quality", "0",
-        "--embed-thumbnail",
-        "--output", f"{destino}/%(title)s.%(ext)s", url
-    ]
-
-    verificar_cookies()
-
-    try:
-        subprocess.run(cmd, check=True)
-        registrar_download(url, destino)
-        print("✅ Download de áudio concluído!")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erro ao baixar áudio: {e.stderr}")
-
-def baixar_video():
-    url = input("\n 🌍 Cole a URL do vídeo: ").strip()
-    if not url:
-        print("❌ URL não pode ser vazia!")
-        return
-
-    print("\n 📂 Escolha onde salvar:")
-    print("1 - Pasta Downloads\n2 - Pasta Videos\n3 - Pasta Músicas")
-    opcao = input("Digite o número da opção (1-3): ").strip()
-    destino = pasta_destino(opcao)
-
-    if not verificar_espaco(destino):
-        return
-
-    listar = input(" 🔍 Listar formatos disponíveis? (s/N): ").lower()
-    if listar == "s":
-        if not listar_formatos_disponiveis(url):
-            return
-
-    formato = input("\n⌨️ Digite o ID do formato (ex: 18, 22) ou pressione Enter para melhor qualidade: ").strip()
-    
-    cmd = [
-        "yt-dlp",
-        "--merge-output-format", "mp4",
-        "--write-subs", "--sub-langs", "pt,en",
-        "--embed-thumbnail",
-        "-o", f"{destino}/%(title)s.%(ext)s",
-    ]
-    
-    if formato and formato.isdigit():
-        cmd += ["-f", formato]
-    
-    cmd.append(url)
-
-    verificar_cookies()
-
-    try:
-        subprocess.run(cmd, check=True)
-        registrar_download(url, destino)
-        print("✅ Download de vídeo concluído!")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erro ao baixar vídeo: {e.stderr}")
-
-def main():
-    print(BANNER)
-    verificar_ytdlp()
-    verificar_atualizacao()
-
-    while True:
-        print(MENU)
-        escolha = input("Escolha (1-3): ").strip()
-
-        if escolha == "1":
-            baixar_audio()
-        elif escolha == "2":
-            baixar_video()
-        elif escolha == "3":
-            print("👋 Saindo...")
-            sys.exit(0)
-        else:
-            print("❌ Opção inválida. Tente novamente.")
+        logger.critical(f"Erro fatal: {e}", exc_info=True)
+        print(f"❌ Erro crítico: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
