@@ -8,11 +8,25 @@
 **Dload** é um CLI tool super rápido para downloads de vídeos e áudio do YouTube usando o poderoso [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) - com interface amigável e organização automática em pastas!
 
 ## 🌟 Features Principais
-- ✅ Download rápido de vídeos e áudios
-- 🖥️ Interface interativa simples
-- 📂 Organização automática em pastas (Downloads/Vídeos/Músicas)
+- ✅ Download rápido de vídeos e áudios com alta qualidade
+
+- 🖥️ Interface interativa aprimorada com emojis e banners estilizados
+
+- 📂 Organização automática em pastas (Downloads/, Vídeos/, Músicas)
+
+🧠 Verificações inteligentes:
+
+- Espaço disponível no disco
+- Atualizações disponíveis do yt-dlp
+- Presença de cookies.txt (para conteúdo privado)
+
+- 📜 Histórico de downloads salvo em .dload_history
+
 - ⚡ Baseado no poderoso yt-dlp
-- 🔄 Atualização automática do yt-dlp
+
+- 🔄 Atualização automática do yt-dlp incluída
+
+- 🧱 Código modular e de fácil manutenção
 ---
 
 ## 📑 Tabela de Conteúdo
@@ -21,10 +35,10 @@
 - [Features Principais](#-features-principais)
 - [Instalação](#-instalação)
 - [Como Usar](#-como-usar)
-- [Solução de Problemas](#solucao-de-problemas)
+- [Solução de Problemas](#-solução-de-problemas)
 - [Desinstalação](#-desinstalação)
 - [Como ajudar](#-como-ajudar)
-
+  
 ---
 
 ## ✅ Requisitos
@@ -145,10 +159,10 @@ Você poderá escolher onde salvar o conteúdo: Downloads, Vídeos ou Músicas.
 Digite o número da opção (1-3):
 
 ```
-
 ## 🛠️ Solução de Problemas
 
 - Se encontrar erros, certifique-se que:
+  
   1. FFmpeg está instalado (`ffmpeg -version`)
   2. yt-dlp está atualizado (`yt-dlp -U`)
   3. Tem permissão na pasta destino
