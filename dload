@@ -38,6 +38,22 @@ DESTINOS = {
     "3": ler_diretorio_usuario("XDG_MUSIC_DIR", Path.home() / "Música"),
 }
 
+def instalar_yt_dlp():
+    """Instala o yt-dlp automaticamente se não estiver instalado."""
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
+        print("✅ yt-dlp instalado com sucesso!")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erro ao instalar yt-dlp: {e}")
+        logger.error(f"Erro ao instalar yt-dlp: {e}")
+        sys.exit(1)
+
+def verificar_yt_dlp():
+    """Verifica se yt-dlp está instalado, e tenta instalá-lo caso não esteja."""
+    if shutil.which("yt-dlp") is None:
+        print("❌ yt-dlp não encontrado.")
+        instalar_yt_dlp()
+
 def obter_titulo_video(url):
     try:
         resultado = subprocess.run([
@@ -221,10 +237,7 @@ def main():
 """)
     logger.info("Iniciando Dload")
 
-    if shutil.which("yt-dlp") is None:
-        print("❌ yt-dlp não encontrado. Instale com:")
-        print("  pip install yt-dlp")
-        sys.exit(1)
+    verificar_yt_dlp()
 
     if shutil.which("ffmpeg") is None:
         print("❌ ffmpeg não encontrado. Instale com:")
