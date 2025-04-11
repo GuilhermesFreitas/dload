@@ -1,4 +1,5 @@
-# 🚀 Dload - Fast YouTube Downloader
+# 🚀 Dload - Fast & Interactive Video Downloader for the Terminal
+
 
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-powered-blueviolet)
